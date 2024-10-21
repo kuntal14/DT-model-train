@@ -14,3 +14,9 @@ for i in range(num_models):
     train_model(model, train_loader, val_loader, f"CNN_{i+1}")
     print(f"Starting Testing for CNN {i+1}")
     test_model(model, test_loader)
+
+
+# torch operations to add in the code later
+
+        # self.x = torch.stack(self.x).permute(1, 0, 2)
+        # self.y = torch.stack(self.y).permute(1, 0)

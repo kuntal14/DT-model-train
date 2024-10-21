@@ -2,10 +2,9 @@ import torch
 from torch.utils.data import Dataset
 import dask.dataframe as dd
 import os
-import ast
 
 class JSONL_Dataset(Dataset):
-    def __init__(self, directories, normalize_y=True):  
+    def __init__(self, directories, normalize_y=True):
         self.file_paths = []
         for directory in directories:
             for file in os.listdir(directory):
@@ -14,13 +13,12 @@ class JSONL_Dataset(Dataset):
 
         # Load data into a Dask DataFrame
         self.data = dd.read_json(self.file_paths, lines=True)
+        self.data = self.data.repartition(npartitions=100)
         # Compute the DataFrame to avoid multiple loads
-        self.data = self.data.compute()
+        # self.data = self.data.compute()
         
-        self.x = [torch.tensor(ast.literal_eval(item)) for item in self.data['accl']]
-        self.y = [torch.tensor(ast.literal_eval(item)) for item in self.data['k']]
-        self.x = torch.stack(self.x).permute(1, 0, 2)
-        self.y = torch.stack(self.y).permute(1, 0)
+        self.x = [item for item in self.data['accl']]
+        self.y = [item for item in self.data['k']]
 
         # Store original y for denormalization
         self.original_y = self.y.clone()
@@ -28,7 +26,7 @@ class JSONL_Dataset(Dataset):
         # Normalize x
         self.x_mean = self.x.mean(dim=(0, 1), keepdim=True)
         self.x_std = self.x.std(dim=(0, 1), keepdim=True)
-        self.x = (self.x - self.x_mean) / self.x_std
+        self.x = (self.x - self.x_mean) / self.x_std 
 
         # Optionally normalize y
         if normalize_y:
